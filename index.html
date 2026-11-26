@@ -16,8 +16,8 @@
   .stat .k { font-size: 11px; color: #8fa0bd; }
   .stat .v { font-size: 17px; font-weight: 700; margin-top: 2px; }
   .stat .v.down { color: #ff5d5d; } .stat .v.now { color: #ff9f2e; }
-  .chartbox { position: relative; background: #131c31; border: 1px solid #263354; border-radius: 12px; margin-top: 10px; padding: 8px 4px 2px; }
-  svg { display: block; width: 100%; height: auto; }
+  .chartbox { position: relative; background: #131c31; border: 1px solid #263354; border-radius: 12px; margin-top: 10px; padding: 8px 4px 2px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  svg { display: block; width: 100%; min-width: 680px; height: auto; }
   .pt { cursor: pointer; }
   #tip { position: absolute; pointer-events: none; opacity: 0; transition: opacity .12s; background: rgba(10,15,28,.96); border: 1px solid #ff9f2e; border-radius: 10px; padding: 10px 12px; font-size: 12.5px; line-height: 1.75; min-width: 178px; z-index: 5; box-shadow: 0 8px 24px rgba(0,0,0,.5); }
   #tip .t1 { font-weight: 700; font-size: 13.5px; }
@@ -29,6 +29,13 @@
   .legend { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; font-size: 12px; color: #93a1bb; }
   .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
   .foot { margin-top: 12px; font-size: 12px; color: #71809c; line-height: 1.8; }
+  @media (max-width: 640px) {
+    body { padding: 12px 8px 20px; }
+    h1 { font-size: 16px; }
+    .stat { flex: 1 1 calc(33.3% - 7px); min-width: 0; padding: 7px 10px; }
+    .stat .v { font-size: 15px; }
+    .legend { gap: 10px; }
+  }
 </style>
 </head>
 <body>
@@ -162,8 +169,9 @@ G.forEach((g, idx) => {
     stroke: est ? '#93a1bb' : '#0e1526', 'stroke-width': est ? 1.8 : 1.2 });
   const show = ev => {
     const r = box.getBoundingClientRect();
-    const px = (ev.touches ? ev.touches[0].clientX : ev.clientX) - r.left;
-    const py = (ev.touches ? ev.touches[0].clientY : ev.clientY) - r.top;
+    const cr = c.getBoundingClientRect();
+    const px = cr.left - r.left + box.scrollLeft + cr.width / 2;
+    const py = cr.top - r.top + box.scrollTop + cr.height / 2;
     tip.innerHTML =
       '<div class="t1">' + g[0] + ' ' + g[1] + ' · ' + g[2] +
       (g[6] ? '<span class="tag">MVP</span>' : '') + (g[7] ? '<span class="tag medal">' + g[7] + '</span>' : '') + '</div>' +
@@ -172,8 +180,9 @@ G.forEach((g, idx) => {
       '<div>赛后积分：<b>' + v + '</b> <span class="dim">（第 ' + i + ' 把）</span></div>';
     tip.style.opacity = 1;
     let tx = px + 16, ty = py + 14;
-    if (tx + 210 > r.width) tx = px - 200;
-    if (ty + 130 > r.height) ty = py - 132;
+    if (tx + 210 > box.scrollWidth) tx = px - 200;
+    if (tx < box.scrollLeft) tx = box.scrollLeft + 4;
+    if (ty + 130 > box.scrollHeight) ty = py - 132;
     tip.style.left = tx + 'px'; tip.style.top = ty + 'px';
     c.setAttribute('r', est ? 6.5 : 6);
   };

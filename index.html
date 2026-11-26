@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>巅峰赛积分趋势</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: #0e1526; color: #e8ecf4; padding: 18px 14px 26px; }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  h1 { font-size: 19px; font-weight: 700; letter-spacing: .5px; }
+  h1 .orange { color: #ff9f2e; }
+  .sub { margin-top: 6px; font-size: 12.5px; color: #93a1bb; line-height: 1.7; }
+  .stats { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0 6px; }
+  .stat { background: #182238; border: 1px solid #263354; border-radius: 10px; padding: 8px 14px; min-width: 104px; }
+  .stat .k { font-size: 11px; color: #8fa0bd; }
+  .stat .v { font-size: 17px; font-weight: 700; margin-top: 2px; }
+  .stat .v.down { color: #ff5d5d; } .stat .v.now { color: #ff9f2e; }
+  .chartbox { position: relative; background: #131c31; border: 1px solid #263354; border-radius: 12px; margin-top: 10px; padding: 8px 4px 2px; }
+  svg { display: block; width: 100%; height: auto; }
+  .pt { cursor: pointer; }
+  #tip { position: absolute; pointer-events: none; opacity: 0; transition: opacity .12s; background: rgba(10,15,28,.96); border: 1px solid #ff9f2e; border-radius: 10px; padding: 10px 12px; font-size: 12.5px; line-height: 1.75; min-width: 178px; z-index: 5; box-shadow: 0 8px 24px rgba(0,0,0,.5); }
+  #tip .t1 { font-weight: 700; font-size: 13.5px; }
+  #tip .win { color: #3ecf6e; } #tip .lose { color: #ff5d5d; }
+  #tip .delta { font-weight: 700; }
+  #tip .tag { display: inline-block; background: #ff9f2e; color: #1a1206; border-radius: 4px; padding: 0 6px; font-size: 11px; font-weight: 700; margin-left: 6px; vertical-align: 1px; }
+  #tip .tag.medal { background: #3d5a99; color: #dce8ff; }
+  #tip .dim { color: #93a1bb; }
+  .legend { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; font-size: 12px; color: #93a1bb; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+  .foot { margin-top: 12px; font-size: 12px; color: #71809c; line-height: 1.8; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>巅峰赛积分趋势 <span class="orange">1948 → 1974 → 1769</span></h1>
+  <div class="sub">2026-11-22 首把起至 11-26 晚 · 共 57 把 · 鼠标悬停（或点按）任意点查看当局详情</div>
+  <div class="stats">
+    <div class="stat"><div class="k">起点（11-22 首把前）</div><div class="v">1948</div></div>
+    <div class="stat"><div class="k">赛季最高</div><div class="v">1974</div></div>
+    <div class="stat"><div class="k">当前分数</div><div class="v now">1769</div></div>
+    <div class="stat"><div class="k">距 2100</div><div class="v">331</div></div>
+    <div class="stat"><div class="k">57 把战绩</div><div class="v">21 胜 36 负</div></div>
+  </div>
+  <div class="chartbox" id="chartbox">
+    <div id="tip"></div>
+    <svg id="chart" viewBox="0 0 1040 470" preserveAspectRatio="xMidYMid meet"></svg>
+  </div>
+  <div class="legend">
+    <span><i style="background:#ff9f2e"></i>积分折线（营地橙）</span>
+    <span><i style="background:#3ecf6e"></i>胜</span>
+    <span><i style="background:#ff5d5d"></i>负</span>
+    
+    <span>虚线为 1900 与目标 2100</span>
+  </div>
+  <div class="foot">
+    数据来源：王者营地战绩截图（英雄/KDA/时间/胜负/牌子均为实测）、结算截图与逐把汇报对账。11-22 前两把分差由结算截图实测确认（孙权连胜 +13/+13，1961 → 1974，孙权战力同步涨至 10608）；第 3–11 把（守榜段）单场分差为按合计净 -93 对账的估算，已经本人确认无误，其中唯一的胜场是大乔 14:13 那把。其余各日分差均为实测。
+  </div>
+</div>
+<script>
+// [日期, 时间, 英雄, 胜1/负0, 分差, KDA, MVP, 牌子, 分差估算]
+const G = [
+ // 11-22（前两把分差实测；第3把起分差估算，英雄/KDA实测）
+ ["11-22","12:57","孙权",1,13,"2/4/9",0,"",0],
+ ["11-22","13:17","孙权",1,13,"3/1/5",0,"",0],
+ ["11-22","13:43","桑启",0,-13,"1/5/3",0,"",0],
+ ["11-22","13:59","女娲",0,-13,"0/3/1",0,"",0],
+ ["11-22","14:13","大乔",1,13,"0/2/15",0,"",0],
+ ["11-22","14:28","女娲",0,-13,"1/1/0",0,"",0],
+ ["11-22","14:43","蔡文姬",0,-14,"0/6/9",0,"",0],
+ ["11-22","15:00","女娲",0,-13,"0/3/2",0,"",0],
+ ["11-22","23:08","孙权",0,-13,"4/6/4",0,"",0],
+ ["11-22","23:28","孙权",0,-14,"0/4/3",0,"",0],
+ ["11-22","23:43","孙权",0,-13,"7/3/1",0,"",0],
+ // 11-23
+ ["11-23","13:20","项羽",1,14,"0/4/12",0,"",0],
+ ["11-23","13:38","孙权",0,-14,"1/3/1",0,"",0],
+ ["11-23","13:54","张飞",1,15,"2/0/13",1,"金牌游走",0],
+ ["11-23","14:09","孙权",0,-11,"2/5/4",0,"",0],
+ ["11-23","14:25","项羽",0,-14,"2/6/11",0,"",0],
+ ["11-23","14:48","公孙离",0,-13,"5/6/3",0,"",0],
+ ["11-23","15:06","大乔",1,13,"2/6/8",0,"",0],
+ ["11-23","15:25","敖隐",0,-12,"2/1/5",0,"",0],
+ ["11-23","15:44","元流之子·辅助",0,-14,"0/5/2",0,"",0],
+ // 11-24
+ ["11-24","12:11","莱西奥",1,13,"3/4/4",0,"",0],
+ ["11-24","12:35","元流之子·射手",1,14,"7/1/3",0,"",0],
+ ["11-24","12:51","元流之子·射手",0,-13,"5/2/3",0,"",0],
+ ["11-24","13:11","元流之子·射手",1,14,"3/0/13",0,"银牌发育路",0],
+ ["11-24","13:29","元流之子·射手",0,-13,"4/4/10",0,"",0],
+ ["11-24","13:49","元流之子·射手",0,-14,"2/5/1",0,"",0],
+ ["11-24","14:08","莱西奥",0,-13,"2/2/2",0,"",0],
+ ["11-24","14:28","项羽",1,13,"3/6/14",0,"",0],
+ ["11-24","14:52","弈星",1,14,"0/0/6",0,"",0],
+ ["11-24","15:06","项羽",0,-12,"1/5/0",0,"",0],
+ ["11-24","15:20","貂蝉",1,14,"6/4/13",0,"银牌中路",0],
+ ["11-24","15:36","项羽",0,-12,"0/3/4",0,"",0],
+ ["11-24","15:51","貂蝉",0,-12,"2/3/5",1,"",0],
+ ["11-24","16:11","貂蝉",1,14,"6/1/2",0,"",0],
+ ["11-24","16:28","弈星",0,-12,"4/1/14",1,"银牌中路",0],
+ ["11-24","16:48","貂蝉",0,-13,"5/7/1",0,"",0],
+ ["11-24","17:04","貂蝉",0,-13,"1/5/2",0,"",0],
+ ["11-24","17:19","貂蝉",0,-13,"1/4/7",0,"",0],
+ ["11-24","17:45","少司缘",1,14,"1/4/16",0,"",0],
+ ["11-24","18:02","大乔",0,-13,"2/4/0",0,"",0],
+ ["11-24","18:12","少司缘",1,14,"3/4/18",0,"银牌游走",0],
+ ["11-24","18:31","女娲",0,-12,"7/4/7",0,"",0],
+ ["11-24","18:56","少司缘",0,-13,"2/3/7",0,"",0],
+ ["11-24","19:14","孙权",1,14,"6/0/7",1,"铜牌发育路",0],
+ // 11-25
+ ["11-25","13:48","孙权",0,-14,"1/3/2",0,"",0],
+ ["11-25","14:05","孙权",1,14,"11/3/12",1,"银牌发育路",0],
+ ["11-25","14:29","孙权",0,-11,"5/5/2",1,"",0],
+ ["11-25","14:45","孙权",0,-13,"8/3/6",0,"",0],
+ ["11-25","15:07","孙权",1,13,"2/1/4",0,"",0],
+ ["11-25","15:23","项羽",1,14,"2/7/23",0,"铜牌游走",0],
+ ["11-25","15:46","海诺",0,-13,"2/4/5",0,"",0],
+ ["11-25","16:04","夏侯惇",0,-13,"0/5/6",0,"",0],
+ ["11-25","16:22","孙权",0,-14,"3/3/4",0,"",0],
+ // 11-26
+ ["11-26","19:03","貂蝉",0,-13,"3/4/4",0,"",0],
+ ["11-26","19:23","貂蝉",1,14,"5/2/10",0,"银牌中路",0],
+ ["11-26","19:41","项羽",0,-13,"3/4/9",0,"",0],
+ ["11-26","20:07","貂蝉",1,13,"1/3/6",0,"",0],
+];
+const START = 1948, PEAK_I = 2; // 第2把后到达 1974
+const svg = document.getElementById('chart');
+const tip = document.getElementById('tip');
+const box = document.getElementById('chartbox');
+const W = 1040, H = 470, PL = 46, PR = 16, PT = 26, PB = 46;
+const MIN = 1700, MAX = 2150;
+const n = G.length + 1;
+const X = i => PL + (W - PL - PR) * i / (n - 1);
+const Y = v => PT + (H - PT - PB) * (MAX - v) / (MAX - MIN);
+let scores = [START];
+G.forEach(g => scores.push(scores[scores.length - 1] + g[4]));
+const NS = 'http://www.w3.org/2000/svg';
+function el(name, attrs) { const e = document.createElementNS(NS, name); for (const k in attrs) e.setAttribute(k, attrs[k]); svg.appendChild(e); return e; }
+for (let v = 1700; v <= 2150; v += 50) {
+  el('line', { x1: PL, x2: W - PR, y1: Y(v), y2: Y(v), stroke: v % 100 ? '#1d2a47' : '#28395e', 'stroke-width': 1 });
+  const t = el('text', { x: PL - 7, y: Y(v) + 4, 'text-anchor': 'end', 'font-size': 11, fill: '#71809c' }); t.textContent = v;
+}
+[[2100, '目标 2100'], [1900, '1900']].forEach(([v, lab]) => {
+  el('line', { x1: PL, x2: W - PR, y1: Y(v), y2: Y(v), stroke: '#ff9f2e', 'stroke-width': 1, 'stroke-dasharray': '5 5', opacity: .55 });
+  const t = el('text', { x: W - PR - 2, y: Y(v) - 6, 'text-anchor': 'end', 'font-size': 11, fill: '#ff9f2e' }); t.textContent = lab;
+});
+const days = [[0, 11, '11-22 · 11把'], [11, 20, '11-23 · 9把'], [20, 44, '11-24 · 24把'], [44, 53, '11-25 · 9把'], [53, 57, '11-26 · 4把']];
+days.forEach(([a, b, lab], i) => {
+  if (i % 2 === 0) el('rect', { x: X(a), y: PT - 8, width: X(b) - X(a), height: H - PT - PB + 16, fill: '#ffffff', opacity: .03 });
+  const t = el('text', { x: (X(a) + X(b)) / 2, y: H - 14, 'text-anchor': 'middle', 'font-size': 11.5, fill: '#8fa0bd' }); t.textContent = lab;
+});
+function path(a, b) { let d = ''; for (let i = a; i <= b; i++) d += (i === a ? 'M' : 'L') + X(i).toFixed(1) + ' ' + Y(scores[i]).toFixed(1) + ' '; return d; }
+el('path', { d: path(0, n - 1), fill: 'none', stroke: '#ff9f2e', 'stroke-width': 2.4 });
+const star = el('text', { x: X(PEAK_I), y: Y(1974) + 6, 'text-anchor': 'middle', 'font-size': 17, fill: '#ffc95e' }); star.textContent = '★';
+const st = el('text', { x: X(PEAK_I) + 10, y: Y(1974) - 10, 'font-size': 12, fill: '#ffc95e', 'font-weight': 700 }); st.textContent = '1974 赛季最高';
+const s0 = el('text', { x: X(0) + 2, y: Y(START) + 20, 'font-size': 11.5, fill: '#8fa0bd' }); s0.textContent = '1948 起点';
+const et = el('text', { x: X(n - 1) - 4, y: Y(scores[n - 1]) - 12, 'text-anchor': 'end', 'font-size': 12.5, fill: '#ff9f2e', 'font-weight': 700 }); et.textContent = scores[n - 1] + ' 当前';
+G.forEach((g, idx) => {
+  const i = idx + 1, v = scores[i], est = g[8] === 1;
+  const c = el('circle', { cx: X(i), cy: Y(v), r: est ? 5 : 4.6, class: 'pt',
+    fill: est ? 'transparent' : (g[3] ? '#3ecf6e' : '#ff5d5d'),
+    stroke: est ? '#93a1bb' : '#0e1526', 'stroke-width': est ? 1.8 : 1.2 });
+  const show = ev => {
+    const r = box.getBoundingClientRect();
+    const px = (ev.touches ? ev.touches[0].clientX : ev.clientX) - r.left;
+    const py = (ev.touches ? ev.touches[0].clientY : ev.clientY) - r.top;
+    tip.innerHTML =
+      '<div class="t1">' + g[0] + ' ' + g[1] + ' · ' + g[2] +
+      (g[6] ? '<span class="tag">MVP</span>' : '') + (g[7] ? '<span class="tag medal">' + g[7] + '</span>' : '') + '</div>' +
+      '<div>结果：<span class="' + (g[3] ? 'win' : 'lose') + '">' + (g[3] ? '胜利' : '失败') + '</span>　战绩：' + g[5] + '</div>' +
+      '<div>本局分差：<span class="delta" style="color:' + (g[4] > 0 ? '#3ecf6e' : '#ff5d5d') + '">' + (g[4] > 0 ? '+' : '') + g[4] + ' 分</span>' + (est ? ' <span class="dim">（估算）</span>' : '') + '</div>' +
+      '<div>赛后积分：<b>' + v + '</b> <span class="dim">（第 ' + i + ' 把）</span></div>';
+    tip.style.opacity = 1;
+    let tx = px + 16, ty = py + 14;
+    if (tx + 210 > r.width) tx = px - 200;
+    if (ty + 130 > r.height) ty = py - 132;
+    tip.style.left = tx + 'px'; tip.style.top = ty + 'px';
+    c.setAttribute('r', est ? 6.5 : 6);
+  };
+  const hide = () => { tip.style.opacity = 0; c.setAttribute('r', est ? 5 : 4.6); };
+  c.addEventListener('mouseenter', show); c.addEventListener('mousemove', show);
+  c.addEventListener('mouseleave', hide); c.addEventListener('touchstart', show, { passive: true });
+});
+</script>
+</body>
+</html>
